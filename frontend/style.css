@@ -7,12 +7,15 @@
 :root {
     --bg: #0f0f0f;
     --bg-card: #1a1a1a;
+    --bg-input: #252525;
     --text: #e0e0e0;
     --text-muted: #888;
     --accent: #ff6b35;
+    --accent-hover: #ff8555;
     --border: #2a2a2a;
     --success: #4ade80;
     --error: #f87171;
+    --disabled: #555;
 }
 
 body {
@@ -31,7 +34,7 @@ body {
 
 header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 h1 {
@@ -42,6 +45,42 @@ h1 {
 .subtitle {
     color: var(--text-muted);
     font-size: 1.1rem;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+.tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.tab:hover {
+    color: var(--text);
+}
+
+.tab.active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 .controls {
@@ -60,11 +99,11 @@ h1 {
     border-radius: 8px;
     font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.1s, opacity 0.2s;
+    transition: background 0.2s, transform 0.1s;
 }
 
 .btn-primary:hover {
-    opacity: 0.9;
+    background: var(--accent-hover);
     transform: translateY(-1px);
 }
 
@@ -73,9 +112,22 @@ h1 {
 }
 
 .btn-primary:disabled {
-    opacity: 0.6;
+    background: var(--disabled);
     cursor: not-allowed;
     transform: none;
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.btn-danger {
+    background: var(--error);
+}
+
+.btn-danger:hover {
+    background: #f87171;
 }
 
 .last-update {
@@ -118,12 +170,6 @@ h1 {
     padding: 3rem 1rem;
 }
 
-.feeds-info {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    opacity: 0.7;
-}
-
 /* Markdown-like content styling */
 .digest h3 {
     color: var(--accent);
@@ -164,6 +210,131 @@ h1 {
     margin-bottom: 1rem;
 }
 
+/* Feeds management */
+.feeds-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.add-feed-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.add-feed-form input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.add-feed-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.add-feed-form input::placeholder {
+    color: var(--text-muted);
+}
+
+.feeds-list {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.feed-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    gap: 1rem;
+}
+
+.feed-item:last-child {
+    border-bottom: none;
+}
+
+.feed-item.disabled {
+    opacity: 0.5;
+}
+
+.feed-toggle {
+    width: 48px;
+    height: 26px;
+    background: var(--disabled);
+    border-radius: 13px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.feed-toggle.active {
+    background: var(--accent);
+}
+
+.feed-toggle::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+}
+
+.feed-toggle.active::after {
+    transform: translateX(22px);
+}
+
+.feed-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.feed-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.feed-url {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.feed-remove {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+}
+
+.feed-remove:hover {
+    color: var(--error);
+}
+
+.loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem;
+}
+
 footer {
     text-align: center;
     margin-top: 2rem;
@@ -191,5 +362,9 @@ footer a:hover {
 
     .digest {
         padding: 1.25rem;
+    }
+
+    .add-feed-form input {
+        min-width: 100%;
     }
 }

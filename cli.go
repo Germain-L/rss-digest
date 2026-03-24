@@ -41,6 +41,9 @@ func runGenerate() {
 		dataDir = "/data"
 	}
 
+	// Initialize config manager
+	configManager = NewConfigManager(dataDir)
+
 	digest, err := generateDigest(apiKey)
 	if err != nil {
 		log.Fatalf("Error generating digest: %v", err)

@@ -13,25 +13,44 @@
             <p class="subtitle">Daily tech news, summarized by AI</p>
         </header>
 
-        <div class="controls">
-            <button id="refreshBtn" class="btn-primary">
-                <span class="btn-text">🔄 Refresh Digest</span>
-                <span class="btn-loading" style="display: none;">⏳ Loading...</span>
-            </button>
-            <span id="lastUpdate" class="last-update"></span>
+        <nav class="tabs">
+            <button class="tab active" data-tab="digest">Digest</button>
+            <button class="tab" data-tab="feeds">Feeds</button>
+        </nav>
+
+        <div id="tab-digest" class="tab-content active">
+            <div class="controls">
+                <button id="refreshBtn" class="btn-primary">
+                    <span class="btn-text">🔄 Refresh Digest</span>
+                    <span class="btn-loading" style="display: none;">⏳ Loading...</span>
+                </button>
+                <span id="lastUpdate" class="last-update"></span>
+            </div>
+
+            <div id="status" class="status"></div>
+
+            <main id="digest" class="digest">
+                <div class="placeholder">
+                    <p>Click "Refresh Digest" to fetch and summarize the latest news</p>
+                </div>
+            </main>
         </div>
 
-        <div id="status" class="status"></div>
-
-        <main id="digest" class="digest">
-            <div class="placeholder">
-                <p>Click "Refresh Digest" to fetch and summarize the latest news</p>
-                <p class="feeds-info">
-                    Sources: Hacker News, Ars Technica, The Verge, TechCrunch, Go Blog,
-                    r/golang, r/programming, r/MachineLearning, r/artificial, r/kubernetes, r/devops
-                </p>
+        <div id="tab-feeds" class="tab-content">
+            <div class="feeds-header">
+                <h2>Manage Feeds</h2>
             </div>
-        </main>
+
+            <form id="addFeedForm" class="add-feed-form">
+                <input type="url" id="feedUrl" placeholder="RSS feed URL" required>
+                <input type="text" id="feedName" placeholder="Display name (optional)">
+                <button type="submit" class="btn-primary">Add Feed</button>
+            </form>
+
+            <div id="feedsList" class="feeds-list">
+                <p class="loading">Loading feeds...</p>
+            </div>
+        </div>
 
         <footer>
             <p>Powered by <a href="https://groq.com" target="_blank">Groq</a> (Llama 3.3 70B) |

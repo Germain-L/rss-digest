@@ -155,3 +155,13 @@ func cleanHTML(s string) string {
 	}
 	return strings.TrimSpace(result.String())
 }
+
+// getDefaultFeeds returns default feed URLs for backward compatibility
+func getDefaultFeeds() []string {
+	feeds := getDefaultFeedConfigs()
+	urls := make([]string, len(feeds))
+	for i, f := range feeds {
+		urls[i] = f.URL
+	}
+	return urls
+}
