@@ -40,7 +40,7 @@ type ChatResponse struct {
 
 func NewSummarizer(apiKey, model string) *Summarizer {
 	if model == "" {
-		model = "glm-4-flash"
+		model = "glm-4.7-flash"
 	}
 	return &Summarizer{
 		apiKey: apiKey,
@@ -99,8 +99,8 @@ Here are today's news items:
 		return "", err
 	}
 
-	// Use GLM API endpoint
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://open.bigmodel.cn/api/paas/v4/chat/completions", bytes.NewReader(body))
+	// Use Zhipu AI API endpoint
+	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.z.ai/api/coding/paas/v4/chat/completions", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
@@ -139,5 +139,5 @@ Here are today's news items:
 type GroqSummarizer = Summarizer
 
 func NewGroqSummarizer(apiKey string) *Summarizer {
-	return NewSummarizer(apiKey, "glm-4-flash")
+	return NewSummarizer(apiKey, "glm-4.7-flash")
 }
