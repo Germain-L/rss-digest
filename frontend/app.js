@@ -220,7 +220,8 @@ function displayDigest(data) {
         return;
     }
     
-    elements.digest.innerHTML = cards.map((card, i) => `
+    // Build digest cards HTML
+    let html = cards.map((card, i) => `
         <article class="digest-card">
             <div class="card-header">
                 <h3 class="card-title">${escapeHtml(card.title)}</h3>
@@ -231,6 +232,31 @@ function displayDigest(data) {
             </div>
         </article>
     `).join('');
+    
+    // Add sources section if articles exist
+    if (data.articles && data.articles.length > 0) {
+        html += `
+            <section class="sources-section">
+                <h2 class="sources-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Sources
+                </h2>
+                <div class="sources-grid">
+                    ${data.articles.map(article => `
+                        <a href="${escapeHtml(article.link)}" target="_blank" rel="noopener noreferrer" class="source-link">
+                            <span class="source-title">${escapeHtml(article.title)}</span>
+                            <span class="source-name">${escapeHtml(article.source)}</span>
+                        </a>
+                    `).join('')}
+                </div>
+            </section>
+        `;
+    }
+    
+    elements.digest.innerHTML = html;
     
     // Update metadata
     if (data.timestamp) {

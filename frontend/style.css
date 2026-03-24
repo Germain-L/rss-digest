@@ -523,6 +523,66 @@ body {
     font-size: 0.9rem;
 }
 
+/* Sources Section */
+.sources-section {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border);
+}
+
+.sources-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.sources-title svg {
+    color: var(--accent);
+}
+
+.sources-grid {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.source-link {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.source-link:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-light);
+    transform: translateX(4px);
+}
+
+.source-title {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.source-link:hover .source-title {
+    color: var(--accent);
+}
+
+.source-name {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
 /* Feeds Section */
 .feeds-section {
     animation: fadeIn var(--transition-base);

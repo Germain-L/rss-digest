@@ -8,10 +8,17 @@ import (
 	"time"
 )
 
+type Article struct {
+	Title  string `json:"title"`
+	Link   string `json:"link"`
+	Source string `json:"source"`
+}
+
 type StoredDigest struct {
 	Content   string    `json:"content"`
 	Timestamp time.Time `json:"timestamp"`
 	ItemCount int       `json:"itemCount"`
+	Articles  []Article `json:"articles"`
 }
 
 type Storage struct {
@@ -44,7 +51,7 @@ func (s *Storage) Get() *StoredDigest {
 	return s.cache
 }
 
-func (s *Storage) Save(content string, itemCount int) error {
+func (s *Storage) Save(content string, itemCount int, articles []Article) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -52,6 +59,7 @@ func (s *Storage) Save(content string, itemCount int) error {
 		Content:   content,
 		Timestamp: time.Now(),
 		ItemCount: itemCount,
+		Articles:  articles,
 	}
 
 	data, err := json.MarshalIndent(d, "", "  ")

@@ -54,7 +54,7 @@ func runGenerate() {
 	}
 
 	storage := NewStorage(dataDir)
-	if err := storage.Save(digest.Content, digest.ItemCount); err != nil {
+	if err := storage.Save(digest.Content, digest.ItemCount, digest.Articles); err != nil {
 		log.Fatalf("Error saving digest: %v", err)
 	}
 

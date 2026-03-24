@@ -87,7 +87,7 @@ func handleRefreshDigest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if storage != nil {
-		storage.Save(digest.Content, digest.ItemCount)
+		storage.Save(digest.Content, digest.ItemCount, digest.Articles)
 	}
 
 	json.NewEncoder(w).Encode(digest)
@@ -245,9 +245,23 @@ func generateDigest(apiKey string) (*StoredDigest, error) {
 
 	log.Println("✅ Digest generated")
 
+	// Convert FeedItems to Articles for storage (limit to 15 most recent)
+	articles := make([]Article, 0, 15)
+	for i, item := range allItems {
+		if i >= 15 {
+			break
+		}
+		articles = append(articles, Article{
+			Title:  item.Title,
+			Link:   item.Link,
+			Source: item.Source,
+		})
+	}
+
 	return &StoredDigest{
 		Content:   summary,
 		Timestamp: time.Now(),
 		ItemCount: len(allItems),
+		Articles:  articles,
 	}, nil
 }
