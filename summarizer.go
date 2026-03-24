@@ -11,22 +11,23 @@ import (
 	"time"
 )
 
-type GroqSummarizer struct {
+type Summarizer struct {
 	apiKey     string
+	model      string
 	httpClient *http.Client
 }
 
-type GroqRequest struct {
-	Model    string          `json:"model"`
-	Messages []GroqMessage   `json:"messages"`
+type ChatRequest struct {
+	Model    string        `json:"model"`
+	Messages []ChatMessage `json:"messages"`
 }
 
-type GroqMessage struct {
+type ChatMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-type GroqResponse struct {
+type ChatResponse struct {
 	Choices []struct {
 		Message struct {
 			Content string `json:"content"`
@@ -37,18 +38,22 @@ type GroqResponse struct {
 	} `json:"error"`
 }
 
-func NewGroqSummarizer(apiKey string) *GroqSummarizer {
-	return &GroqSummarizer{
+func NewSummarizer(apiKey, model string) *Summarizer {
+	if model == "" {
+		model = "glm-4-flash"
+	}
+	return &Summarizer{
 		apiKey: apiKey,
+		model:  model,
 		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 	}
 }
 
-func (g *GroqSummarizer) Summarize(ctx context.Context, items []FeedItem) (string, error) {
-	// Build content from items (limit to last 50 items, most recent first)
-	maxItems := 50
+func (s *Summarizer) Summarize(ctx context.Context, items []FeedItem) (string, error) {
+	// Build content from items (limit to last 80 items for better context)
+	maxItems := 80
 	if len(items) > maxItems {
 		items = items[:maxItems]
 	}
@@ -59,31 +64,32 @@ func (g *GroqSummarizer) Summarize(ctx context.Context, items []FeedItem) (strin
 		content.WriteString(fmt.Sprintf("Source: %s\n", item.Source))
 		if item.Description != "" {
 			desc := item.Description
-			if len(desc) > 300 {
-				desc = desc[:300] + "..."
+			if len(desc) > 400 {
+				desc = desc[:400] + "..."
 			}
 			content.WriteString(fmt.Sprintf("%s\n", desc))
 		}
 		content.WriteString("\n---\n\n")
 	}
 
-	prompt := fmt.Sprintf(`You are a tech news curator. Summarize the following RSS feed items into a concise daily digest.
+	prompt := fmt.Sprintf(`You are a news curator. Summarize the following RSS feed items into a concise daily digest.
 
 Rules:
-- Group related stories together
+- Group related stories together by topic
 - Highlight the most important news
 - Be concise but informative
 - Skip duplicates or very similar stories
-- Format with clear sections and bullet points
-- Include source names in parentheses
+- Format with clear sections using markdown headers (##) and bullet points
+- Include source names in parentheses after each item
+- Create sections like: Conflict & Geopolitics, Politics & Elections, Business & Tech, Science & Environment, Other News
 
 Here are today's news items:
 
 %s`, content.String())
 
-	reqBody := GroqRequest{
-		Model: "llama-3.3-70b-versatile",
-		Messages: []GroqMessage{
+	reqBody := ChatRequest{
+		Model: s.model,
+		Messages: []ChatMessage{
 			{Role: "user", Content: prompt},
 		},
 	}
@@ -93,15 +99,16 @@ Here are today's news items:
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.groq.com/openai/v1/chat/completions", bytes.NewReader(body))
+	// Use GLM API endpoint
+	req, err := http.NewRequestWithContext(ctx, "POST", "https://open.bigmodel.cn/api/paas/v4/chat/completions", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+g.apiKey)
+	req.Header.Set("Authorization", "Bearer "+s.apiKey)
 
-	resp, err := g.httpClient.Do(req)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -112,18 +119,25 @@ Here are today's news items:
 		return "", err
 	}
 
-	var groqResp GroqResponse
-	if err := json.Unmarshal(respBody, &groqResp); err != nil {
-		return "", err
+	var chatResp ChatResponse
+	if err := json.Unmarshal(respBody, &chatResp); err != nil {
+		return "", fmt.Errorf("parse error: %v, body: %s", err, string(respBody))
 	}
 
-	if groqResp.Error.Message != "" {
-		return "", fmt.Errorf("Groq API error: %s", groqResp.Error.Message)
+	if chatResp.Error.Message != "" {
+		return "", fmt.Errorf("API error: %s", chatResp.Error.Message)
 	}
 
-	if len(groqResp.Choices) == 0 {
-		return "", fmt.Errorf("no response from Groq")
+	if len(chatResp.Choices) == 0 {
+		return "", fmt.Errorf("no response from API: %s", string(respBody))
 	}
 
-	return groqResp.Choices[0].Message.Content, nil
+	return chatResp.Choices[0].Message.Content, nil
+}
+
+// Backward compatibility
+type GroqSummarizer = Summarizer
+
+func NewGroqSummarizer(apiKey string) *Summarizer {
+	return NewSummarizer(apiKey, "glm-4-flash")
 }
