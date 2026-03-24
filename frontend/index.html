@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS Digest</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📰 RSS Digest</h1>
+            <p class="subtitle">Daily tech news, summarized by AI</p>
+        </header>
+
+        <div class="controls">
+            <button id="refreshBtn" class="btn-primary">
+                <span class="btn-text">🔄 Refresh Digest</span>
+                <span class="btn-loading" style="display: none;">⏳ Loading...</span>
+            </button>
+            <span id="lastUpdate" class="last-update"></span>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <main id="digest" class="digest">
+            <div class="placeholder">
+                <p>Click "Refresh Digest" to fetch and summarize the latest news</p>
+                <p class="feeds-info">
+                    Sources: Hacker News, Ars Technica, The Verge, TechCrunch, Go Blog,
+                    r/golang, r/programming, r/MachineLearning, r/artificial, r/kubernetes, r/devops
+                </p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Powered by <a href="https://groq.com" target="_blank">Groq</a> (Llama 3.3 70B) |
+            <a href="https://github.com/Germain-L/rss-digest" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

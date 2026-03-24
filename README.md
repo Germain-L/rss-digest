@@ -16,17 +16,33 @@ Daily RSS feed summarizer powered by Groq (Llama 3.3 70B).
    export GROQ_API_KEY=your_key_here
    ```
 
-## Run
+## Usage
+
+### CLI Mode
 
 ```bash
 go run .
-```
-
-Or build and run:
-```bash
-go build -o rss-digest .
+# or
 ./rss-digest
 ```
+
+### Web Server Mode
+
+```bash
+./rss-digest --serve
+```
+
+Then open http://localhost:8080 in your browser.
+
+Environment variables:
+- `GROQ_API_KEY` - Your Groq API key (required)
+- `PORT` - Server port (default: 8080)
+
+## API Endpoints
+
+- `GET /` - Web frontend
+- `GET /api/digest` - Get cached digest
+- `POST /api/refresh` - Fetch feeds and regenerate digest
 
 ## Feeds
 
