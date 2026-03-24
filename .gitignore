@@ -1,3 +1,4 @@
 rss-digest
 .env
 *.log
+feeds.json
