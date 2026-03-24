@@ -245,10 +245,10 @@ func generateDigest(apiKey string) (*StoredDigest, error) {
 
 	log.Println("✅ Digest generated")
 
-	// Convert FeedItems to Articles for storage (limit to 15 most recent)
-	articles := make([]Article, 0, 15)
+	// Convert FeedItems to Articles for storage (limit to 30 most recent)
+	articles := make([]Article, 0, 30)
 	for i, item := range allItems {
-		if i >= 15 {
+		if i >= 30 {
 			break
 		}
 		articles = append(articles, Article{
