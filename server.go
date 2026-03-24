@@ -6,41 +6,23 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 )
 
-type CachedDigest struct {
-	Content   string    `json:"content"`
-	Timestamp time.Time `json:"timestamp"`
-}
-
-var (
-	digestCache CachedDigest
-	cacheMutex  sync.RWMutex
-)
-
-func main() {
-	if len(os.Args) > 1 && os.Args[1] == "--serve" {
-		startServer()
-	} else {
-		runCLI()
-	}
-}
+var storage *Storage
 
 func startServer() {
-	apiKey := os.Getenv("GROQ_API_KEY")
-	if apiKey == "" {
-		log.Fatal("GROQ_API_KEY environment variable is required")
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "/data"
 	}
+	storage = NewStorage(dataDir)
 
-	// Serve static files
 	fs := http.FileServer(http.Dir("frontend"))
 	http.Handle("/", fs)
-
-	// API endpoints
 	http.HandleFunc("/api/digest", handleGetDigest)
 	http.HandleFunc("/api/refresh", handleRefreshDigest)
+	http.HandleFunc("/health", handleHealth)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -51,12 +33,27 @@ func startServer() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func handleGetDigest(w http.ResponseWriter, r *http.Request) {
-	cacheMutex.RLock()
-	defer cacheMutex.RUnlock()
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
 
+func handleGetDigest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(digestCache)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	if storage == nil {
+		json.NewEncoder(w).Encode(nil)
+		return
+	}
+
+	d := storage.Get()
+	if d == nil {
+		json.NewEncoder(w).Encode(nil)
+		return
+	}
+
+	json.NewEncoder(w).Encode(d)
 }
 
 func handleRefreshDigest(w http.ResponseWriter, r *http.Request) {
@@ -65,13 +62,37 @@ func handleRefreshDigest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	apiKey := os.Getenv("GROQ_API_KEY")
+	if apiKey == "" {
+		http.Error(w, "GROQ_API_KEY not set", http.StatusInternalServerError)
+		return
+	}
+
+	digest, err := generateDigest(apiKey)
+	if err != nil {
+		log.Printf("Error generating digest: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if storage != nil {
+		storage.Save(digest.Content, digest.ItemCount)
+	}
+
+	json.NewEncoder(w).Encode(digest)
+}
+
+func generateDigest(apiKey string) (*StoredDigest, error) {
 	feeds := getDefaultFeeds()
 	summarizer := NewGroqSummarizer(apiKey)
 
-	ctx, cancel := contextWithTimeout(2 * time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
+	log.Println("📰 Fetching feeds...")
 	var allItems []FeedItem
 	for _, feedURL := range feeds {
 		items, err := FetchFeed(ctx, feedURL)
@@ -80,30 +101,26 @@ func handleRefreshDigest(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		allItems = append(allItems, items...)
+		log.Printf("✓ %s: %d items", feedURL, len(items))
 	}
 
 	if len(allItems) == 0 {
-		http.Error(w, "No items fetched", http.StatusInternalServerError)
-		return
+		return nil, nil
 	}
+
+	log.Printf("📊 Total: %d items", len(allItems))
+	log.Println("🤖 Summarizing...")
 
 	summary, err := summarizer.Summarize(ctx, allItems)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	cacheMutex.Lock()
-	digestCache = CachedDigest{
+	log.Println("✅ Digest generated")
+
+	return &StoredDigest{
 		Content:   summary,
 		Timestamp: time.Now(),
-	}
-	cacheMutex.Unlock()
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(digestCache)
-}
-
-func contextWithTimeout(d time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), d)
+		ItemCount: len(allItems),
+	}, nil
 }

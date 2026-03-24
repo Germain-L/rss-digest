@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rss-digest
+  labels:
+    app: rss-digest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rss-digest
+  template:
+    metadata:
+      labels:
+        app: rss-digest
+    spec:
+      containers:
+        - name: rss-digest
+          image: registry.germainleignel.com/personal/rss-digest:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DATA_DIR
+              value: "/data"
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rss-digest-secrets
+                  key: GROQ_API_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rss-digest-data
+      imagePullSecrets:
+        - name: registry-credentials

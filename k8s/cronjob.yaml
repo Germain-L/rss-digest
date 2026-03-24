@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rss-digest-generator
+  labels:
+    app: rss-digest
+spec:
+  schedule: "0 7 * * *"  # 7 UTC = 8 CET (daily morning)
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: generator
+              image: registry.germainleignel.com/personal/rss-digest:latest
+              imagePullPolicy: Always
+              command: ["./rss-digest", "--generate"]
+              env:
+                - name: DATA_DIR
+                  value: "/data"
+                - name: GROQ_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: rss-digest-secrets
+                      key: GROQ_API_KEY
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "500m"
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: rss-digest-data
+          imagePullSecrets:
+            - name: registry-credentials

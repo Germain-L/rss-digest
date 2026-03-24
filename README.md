@@ -7,42 +7,77 @@ Daily RSS feed summarizer powered by Groq (Llama 3.3 70B).
 - Fetches multiple RSS feeds (tech news, programming, AI, DevOps)
 - Summarizes them into a concise daily digest using Groq's LLM
 - Groups related stories, highlights what matters, skips duplicates
+- Web UI + daily cron for automated updates
 
-## Setup
-
-1. Get a Groq API key from [console.groq.com](https://console.groq.com)
-2. Set environment variable:
-   ```bash
-   export GROQ_API_KEY=your_key_here
-   ```
-
-## Usage
-
-### CLI Mode
+## Quick Start
 
 ```bash
-go run .
-# or
-./rss-digest
+export GROQ_API_KEY=your_key_here
+./rss-digest              # CLI mode (print to stdout)
+./rss-digest --serve      # Web server at http://localhost:8080
+./rss-digest --generate   # Generate and save to storage
 ```
 
-### Web Server Mode
+## Modes
 
-```bash
-./rss-digest --serve
-```
+| Mode | Command | Description |
+|------|---------|-------------|
+| CLI | `./rss-digest` | Print digest to stdout |
+| Server | `./rss-digest --serve` | Start web server |
+| Generate | `./rss-digest --generate` | Generate and save to storage (for cron) |
 
-Then open http://localhost:8080 in your browser.
+## Environment Variables
 
-Environment variables:
-- `GROQ_API_KEY` - Your Groq API key (required)
-- `PORT` - Server port (default: 8080)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GROQ_API_KEY` | (required) | Your Groq API key |
+| `DATA_DIR` | `/data` | Storage directory for digest |
+| `PORT` | `8080` | Server port |
 
 ## API Endpoints
 
-- `GET /` - Web frontend
-- `GET /api/digest` - Get cached digest
-- `POST /api/refresh` - Fetch feeds and regenerate digest
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Web frontend |
+| GET | `/api/digest` | Get cached digest |
+| POST | `/api/refresh` | Regenerate digest |
+| GET | `/health` | Health check |
+
+## Deployment (Kubernetes)
+
+### 1. Build and push image
+
+```bash
+./build-and-push.sh
+```
+
+### 2. Create secret with API key
+
+```bash
+kubectl create secret generic rss-digest-secrets \
+  --from-literal=GROQ_API_KEY=your_key_here \
+  -n default
+```
+
+### 3. Deploy
+
+```bash
+kubectl apply -k k8s/
+```
+
+This deploys:
+- **Deployment** - Web server (1 replica)
+- **CronJob** - Daily digest generation at 7 UTC (8 CET)
+- **PVC** - Persistent storage for digest
+- **Service** - ClusterIP service
+- **Ingress** - https://rss.germainleignel.com
+
+### 4. Verify
+
+```bash
+kubectl get pods -l app=rss-digest
+kubectl logs -l app=rss-digest
+```
 
 ## Feeds
 
@@ -60,7 +95,8 @@ Edit `feeds_list.go` to customize.
 
 ## Requirements
 
-- Go 1.21+
+- Go 1.21+ (for building)
+- Docker (for deployment)
 - Groq API key
 
 ## License
